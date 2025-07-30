@@ -18,7 +18,7 @@ model GoogleFile {
   updatedAt      DateTime               @updatedAt
   permissions    GoogleFilePermission[]
 
-  @@schema("microservice/google-drive")
+  @@schema("microservice/googleapis")
 }
 
 model GoogleFilePermission {
@@ -32,5 +32,5 @@ model GoogleFilePermission {
   file         GoogleFile @relation(fields: [fileId], references: [id], onDelete: Cascade)
   fileId       String
 
-  @@schema("microservice/google-drive")
+  @@schema("microservice/googleapis")
 }
