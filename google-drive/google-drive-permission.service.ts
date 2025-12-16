@@ -18,20 +18,14 @@ export class GoogleDrivePermissionService {
   ) {
     // Create a new JWT client using the key file downloaded from the Google Developer Console.
     const auth = new google.auth.GoogleAuth({
-      keyFile: this.config.getOrThrow<string>(
-        'microservices.googleapis.credentials.serviceAccount'
-      ),
+      keyFile: this.config.getOrThrow<string>('microservices.googleapis.credentials.serviceAccount'),
       scopes: ['https://www.googleapis.com/auth/drive'],
     });
 
     this.drive = google.drive({version: 'v3', auth: auth});
   }
 
-  async createPermission(params: {
-    fileId: string;
-    email: string;
-    role: GoogleAccountRole;
-  }) {
+  async createPermission(params: {fileId: string; email: string; role: GoogleAccountRole}) {
     try {
       const response = await this.drive.permissions.create({
         fileId: params.fileId,
@@ -41,6 +35,7 @@ export class GoogleDrivePermissionService {
           emailAddress: params.email,
           role: params.role,
         },
+        supportsAllDrives: true,
       });
 
       return await this.prisma.googleFilePermission.create({
@@ -67,6 +62,7 @@ export class GoogleDrivePermissionService {
       await this.drive.permissions.delete({
         fileId: permission.fileId,
         permissionId: permission.permissionId,
+        supportsAllDrives: true,
       });
     } catch (error) {
       // TODO (developer) - Handle exception
@@ -78,6 +74,7 @@ export class GoogleDrivePermissionService {
     try {
       const response = await this.drive.permissions.list({
         fileId: params.fileId,
+        supportsAllDrives: true,
       });
 
       const permissions = response.data.permissions;
@@ -90,6 +87,7 @@ export class GoogleDrivePermissionService {
           return await this.drive.permissions.get({
             fileId: params.fileId,
             permissionId: permission.id!,
+            supportsAllDrives: true,
           });
         })
       );

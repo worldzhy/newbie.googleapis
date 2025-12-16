@@ -11,6 +11,7 @@ import {GoogleFileType, GoogleMimeType} from './google-drive.enum';
 @Injectable()
 export class GoogleDriveService {
   private client: google.drive_v3.Drive;
+  private googleSharedDriveId: string;
 
   constructor(
     private readonly config: ConfigService,
@@ -18,19 +19,18 @@ export class GoogleDriveService {
   ) {
     // Create a new JWT client using the key file downloaded from the Google Developer Console.
     const auth = new google.auth.GoogleAuth({
-      keyFile: this.config.getOrThrow<string>(
-        'microservices.googleapis.credentials.serviceAccount'
-      ),
+      keyFile: this.config.getOrThrow<string>('microservices.googleapis.credentials.serviceAccount'),
       scopes: ['https://www.googleapis.com/auth/drive'],
     });
 
     this.client = google.drive({version: 'v3', auth: auth});
+    this.googleSharedDriveId = this.config.getOrThrow<string>('microservice.googleapis.googleSharedDriveId');
   }
 
   async getFile(name: string) {
     const file = await this.prisma.googleFile.findFirst({where: {name}});
     if (file) {
-      const response = await this.client.files.get({fileId: file.id});
+      const response = await this.client.files.get({fileId: file.id, supportsAllDrives: true});
       console.log(response);
     }
 
@@ -81,7 +81,7 @@ export class GoogleDriveService {
    */
   async deleteFile(fileId: string) {
     try {
-      const response = await this.client.files.delete({fileId});
+      const response = await this.client.files.delete({fileId, supportsAllDrives: true});
       if (response.status >= 200 && response.status < 300) {
         await this.deleteFileRecursively(fileId);
       } else {
@@ -98,6 +98,7 @@ export class GoogleDriveService {
       const response = await this.client.files.update({
         fileId: params.fileId,
         requestBody: {name: params.name},
+        supportsAllDrives: true,
       });
 
       if (response.status >= 200 && response.status < 300) {
@@ -122,8 +123,13 @@ export class GoogleDriveService {
         media: {body: params.file.stream},
         requestBody: {
           name: params.file.originalname,
-          parents: params.parentId ? [params.parentId] : undefined,
+          parents: params.parentId
+            ? [params.parentId]
+            : this.googleSharedDriveId
+              ? [this.googleSharedDriveId]
+              : undefined,
         },
+        supportsAllDrives: true,
       });
       if (!file.data.id) {
         throw new InternalServerErrorException('Create google file failed.');
@@ -154,19 +160,20 @@ export class GoogleDriveService {
     }
   }
 
-  private async createFile(params: {
-    name: string;
-    type: GoogleFileType;
-    parentId?: string;
-  }) {
+  private async createFile(params: {name: string; type: GoogleFileType; parentId?: string}) {
     try {
       // Create google file.
       const file = await this.client.files.create({
         requestBody: {
           mimeType: GoogleMimeType[params.type],
           name: params.name,
-          parents: params.parentId ? [params.parentId] : undefined,
+          parents: params.parentId
+            ? [params.parentId]
+            : this.googleSharedDriveId
+              ? [this.googleSharedDriveId]
+              : undefined,
         },
+        supportsAllDrives: true,
       });
       if (!file.data.id) {
         throw new InternalServerErrorException('Create google file failed.');
@@ -237,9 +244,7 @@ export class GoogleDriveService {
 
   private async listFilesOnCloud(params: {parentId?: string}) {
     // supported syntax - https://developers.google.com/drive/api/guides/search-files
-    const q = params.parentId
-      ? `'${params.parentId}' in parents`
-      : `'root' in parents`;
+    const q = params.parentId ? `'${params.parentId}' in parents` : `'root' in parents`;
 
     try {
       const response = await this.client.files.list({q});

@@ -4,12 +4,14 @@
       "credentials": {
         "apiKey": "process.env.GOOGLE_CREDENTIALS_API_KEY",
         "serviceAccount": "process.env.GOOGLE_CREDENTIALS_SERVICE_ACCOUNT"
-      }
+      },
+      "googleSharedDriveId": "process.env.GOOGLE_SHARED_DRIVE_ID"
     }
   },
   "env": {
     "GOOGLE_CREDENTIALS_API_KEY": "",
-    "GOOGLE_CREDENTIALS_SERVICE_ACCOUNT": ""
+    "GOOGLE_CREDENTIALS_SERVICE_ACCOUNT": "",
+    "GOOGLE_SHARED_DRIVE_ID": ""
   },
   "dependencies": {
     "@googleapis/drive": "^8.6.0",
