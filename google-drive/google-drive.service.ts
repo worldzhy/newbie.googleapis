@@ -11,7 +11,7 @@ import {GoogleFileType, GoogleMimeType} from './google-drive.enum';
 @Injectable()
 export class GoogleDriveService {
   private client: google.drive_v3.Drive;
-  private googleSharedDriveId: string;
+  private googleSharedDriveId?: string;
 
   constructor(
     private readonly config: ConfigService,
@@ -24,11 +24,11 @@ export class GoogleDriveService {
     });
 
     this.client = google.drive({version: 'v3', auth: auth});
-    this.googleSharedDriveId = this.config.getOrThrow<string>('microservice.googleapis.googleSharedDriveId');
+    this.googleSharedDriveId = this.config.get<string>('microservice.googleapis.googleSharedDriveId');
   }
 
   async getFile(name: string) {
-    const file = await this.prisma.googleFile.findFirst({where: {name}});
+    const file = await this.prisma.googleDriveFile.findFirst({where: {name}});
     if (file) {
       const response = await this.client.files.get({fileId: file.id, supportsAllDrives: true});
       console.log(response);
@@ -102,7 +102,7 @@ export class GoogleDriveService {
       });
 
       if (response.status >= 200 && response.status < 300) {
-        return await this.prisma.googleFile.update({
+        return await this.prisma.googleDriveFile.update({
           where: {id: params.fileId},
           data: {name: params.name},
         });
@@ -142,7 +142,7 @@ export class GoogleDriveService {
       });
 
       // Save to database.
-      return await this.prisma.googleFile.create({
+      return await this.prisma.googleDriveFile.create({
         data: {
           id: file.data.id,
           name: params.file.originalname,
@@ -186,7 +186,7 @@ export class GoogleDriveService {
       });
 
       // Save to database.
-      return await this.prisma.googleFile.create({
+      return await this.prisma.googleDriveFile.create({
         data: {
           id: file.data.id,
           name: params.name,
@@ -208,7 +208,7 @@ export class GoogleDriveService {
     const path: object[] = [];
 
     // [step 1] Get current file.
-    const file = await this.prisma.googleFile.findFirstOrThrow({
+    const file = await this.prisma.googleDriveFile.findFirstOrThrow({
       where: {id: fileId},
       select: {id: true, name: true, type: true, parentId: true},
     });
@@ -229,10 +229,10 @@ export class GoogleDriveService {
    */
   async deleteFileRecursively(fileId: string) {
     // [step 1] Delete file.
-    await this.prisma.googleFile.delete({where: {id: fileId}});
+    await this.prisma.googleDriveFile.delete({where: {id: fileId}});
 
     // [step 2] Delete files in the folder.
-    const filesInFolder = await this.prisma.googleFile.findMany({
+    const filesInFolder = await this.prisma.googleDriveFile.findMany({
       where: {parentId: fileId},
       select: {id: true},
     });
