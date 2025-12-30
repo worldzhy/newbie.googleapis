@@ -3,13 +3,14 @@ import * as google from '@googleapis/drive';
 import {ConfigService} from '@nestjs/config';
 import {PrismaService} from '@framework/prisma/prisma.service';
 import {GoogleFileType, GoogleMimeType} from './google-drive.enum';
+import {GoogleDriveFileEntity} from './google-drive.entity';
 
 /**
  * Note: In this service, assume "files" means both files and folders.
  * Folders are files that only contain metadata and can be used to organize files in Drive.
  */
 @Injectable()
-export class GoogleDriveService {
+export class GoogleDriveFileService {
   private client: google.drive_v3.Drive;
   private googleSharedDriveId?: string;
 
@@ -205,13 +206,10 @@ export class GoogleDriveService {
   }
 
   async getFilePath(fileId: string) {
-    const path: object[] = [];
+    const path: GoogleDriveFileEntity[] = [];
 
     // [step 1] Get current file.
-    const file = await this.prisma.googleDriveFile.findFirstOrThrow({
-      where: {id: fileId},
-      select: {id: true, name: true, type: true, parentId: true},
-    });
+    const file = await this.prisma.googleDriveFile.findFirstOrThrow({where: {id: fileId}});
     path.push(file);
 
     // [step 2] Get parent file.
