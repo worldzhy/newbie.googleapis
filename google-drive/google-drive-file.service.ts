@@ -1,5 +1,5 @@
 import {Injectable, InternalServerErrorException} from '@nestjs/common';
-import * as google from '@googleapis/drive';
+import {auth, drive, drive_v3} from '@googleapis/drive';
 import {ConfigService} from '@nestjs/config';
 import {PrismaService} from '@framework/prisma/prisma.service';
 import {GoogleFileType, GoogleMimeType} from './google-drive.enum';
@@ -11,7 +11,7 @@ import {GoogleDriveFileEntity} from './google-drive.entity';
  */
 @Injectable()
 export class GoogleDriveFileService {
-  private client: google.drive_v3.Drive;
+  private client: drive_v3.Drive;
   private googleSharedDriveId?: string;
 
   constructor(
@@ -19,12 +19,12 @@ export class GoogleDriveFileService {
     private readonly prisma: PrismaService
   ) {
     // Create a new JWT client using the key file downloaded from the Google Developer Console.
-    const auth = new google.auth.GoogleAuth({
+    const authObj = new auth.GoogleAuth({
       keyFile: this.config.getOrThrow<string>('microservices.googleapis.credentials.serviceAccount'),
       scopes: ['https://www.googleapis.com/auth/drive'],
     });
 
-    this.client = google.drive({version: 'v3', auth: auth});
+    this.client = drive({version: 'v3', auth: authObj});
     this.googleSharedDriveId = this.config.get<string>('microservice.googleapis.googleSharedDriveId');
   }
 

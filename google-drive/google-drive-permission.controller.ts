@@ -1,6 +1,6 @@
-import {Post, Body, Controller, Delete, Param, Get, Query} from '@nestjs/common';
-import {ApiTags, ApiBearerAuth, ApiResponse} from '@nestjs/swagger';
-import {Prisma} from '@prisma/client';
+import {Body, Controller, Delete, Get, Param, Post, Query} from '@nestjs/common';
+import {ApiBearerAuth, ApiResponse, ApiTags} from '@nestjs/swagger';
+import {Prisma} from '@generated/prisma/client';
 import {PrismaService} from '@framework/prisma/prisma.service';
 import {GoogleDrivePermissionService} from '@microservices/googleapis/google-drive/google-drive-permission.service';
 import {

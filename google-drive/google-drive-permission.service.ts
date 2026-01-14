@@ -1,5 +1,9 @@
 import {Injectable} from '@nestjs/common';
-import * as google from '@googleapis/drive';
+import {
+  auth,
+  drive,
+  drive_v3
+} from '@googleapis/drive';
 import {ConfigService} from '@nestjs/config';
 import {PrismaService} from '@framework/prisma/prisma.service';
 import {GoogleAccountRole} from './google-drive.enum';
@@ -10,19 +14,19 @@ import {GoogleAccountRole} from './google-drive.enum';
  */
 @Injectable()
 export class GoogleDrivePermissionService {
-  private drive: google.drive_v3.Drive;
+  private drive: drive_v3.Drive;
 
   constructor(
     private readonly config: ConfigService,
     private readonly prisma: PrismaService
   ) {
     // Create a new JWT client using the key file downloaded from the Google Developer Console.
-    const auth = new google.auth.GoogleAuth({
+    const authObj = new auth.GoogleAuth({
       keyFile: this.config.getOrThrow<string>('microservices.googleapis.credentials.serviceAccount'),
       scopes: ['https://www.googleapis.com/auth/drive'],
     });
 
-    this.drive = google.drive({version: 'v3', auth: auth});
+    this.drive = drive({version: 'v3', auth: auth});
   }
 
   async createPermission(params: {fileId: string; email: string; role: GoogleAccountRole}) {
