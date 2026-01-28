@@ -25,7 +25,7 @@ export class GoogleDriveFileService {
     });
 
     this.client = drive({version: 'v3', auth: authObj});
-    this.googleSharedDriveId = this.config.get<string>('microservice.googleapis.googleSharedDriveId');
+    this.googleSharedDriveId = this.config.get<string>('microservices.googleapis.googleSharedDriveId');
   }
 
   async getFile(name: string) {
